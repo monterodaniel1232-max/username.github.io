@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prototipo · Ingreso y Registro de Usuario</title>
+<style>
+  :root {
+    --bg-app: #eef2f6;
+    --panel-bg: #F5F7F5;
+    --panel-border: #F5F7F5;
+    --field-bg: #fafffa;
+    --field-bg-dark: #123a4f;
+    --field-text: #4e5253;
+    --btn-green: #1b5470;
+    --text-dark: #172431;
+    --modal-bg: #F5F7F5;
+    --modal-border: #17301c;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'inter,Plus Jakarta Sans, roboto';
+    background: var(--bg-app);
+    color: #4e5253;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 16px 64px;
+  }
+
+  h1.app-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    margin: 0 0 24px;
+    color: #33475a;
+  }
+
+  /* --- Navegación de prototipo (no forma parte del diseño final) --- */
+  .proto-nav {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 28px;
+    background: #ffffff;
+    padding: 6px;
+    border-radius: 999px;
+    box-shadow: 0 1px 4px rgba(23,36,49,0.12);
+  }
+  .proto-nav button {
+    border: none;
+    background: transparent;
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: #5b6b7a;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .proto-nav button.active {
+    background: #1b5470;
+    color: #141414;
+  }
+
+  /* --- Contenedor tipo tarjeta/pantalla --- */
+  .screen-stage {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+  }
+
+  .card {
+    display: none;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 28px;
+    padding: 40px 30px 34px;
+    text-align: center;
+    box-shadow: 0 8px 24px rgba(23,36,49,0.10);
+  }
+  .card.visible { display: block; }
+
+  .brand-logo {
+    display: block;
+    width: clamp(110px, 38%, 170px);
+    height: auto;
+    max-width: 100%;
+    margin: 0 auto 14px;
+  }
+
+  .card h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 30px;
+  }
+
+  .field {
+    text-align: left;
+    margin-bottom: 22px;
+    font-family: 'Times New Roman', Times, serif;
+  }
+  .field label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #29404f;
+  }
+  .field input {
+    width: 100%;
+    border: none;
+    border-radius: 10px;
+    padding: 13px 16px;
+    background: var(--field-bg);
+    color: var(--field-text);
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-align: center;
+    outline: none;
+  }
+  .field input::placeholder {
+    color: #4e5253;
+    font-weight: 500;
+  }
+  .field input:focus {
+    box-shadow: 0 0 0 3px rgba(27,84,112,0.35);
+  }
+  .field input[type="password"] { letter-spacing: 2px; }
+
+  .btn-primary {
+    display: block;
+    width: 100%;
+    max-width: 220px;
+    margin: 30px auto 0;
+    padding: 13px 18px;
+    background: var(--btn-green);
+    border: 1.5px solid var(--btn-green-border);
+    border-radius: 10px;
+    font-size: 0.95rem;
+
+    font-weight: 600;
+    color: var(--text-dark);
+    cursor: pointer;
+    transition: transform 0.1s ease, background 0.15s ease;
+  }
+  .btn-primary:hover { background: #43739b; }
+  .btn-primary:active { transform: scale(0.98); }
+
+  .link-row {
+    margin-top: 22px;
+    font-size: 0.85rem;
+    color: #3c5468;
+  }
+  .link-row a {
+    color: #145a8a;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .link-row a:hover { text-decoration: underline; }
+
+  /* --- Modal de error --- */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 25, 35, 0.45);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 10;
+  }
+  .overlay.visible { display: flex; }
+
+  .modal {
+    background: var(--modal-bg);
+    border: 1.5px solid var(--modal-border);
+    border-radius: 22px;
+    padding: 34px 30px 28px;
+    max-width: 320px;
+    width: 100%;
+    text-align: center;
+  }
+  .modal h3 {
+    margin: 0 0 18px;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  .modal p {
+    margin: 0 0 26px;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: #22333f;
+  }
+
+  .success-banner {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #d6f5df;
+    border: 1px solid #5cb875;
+    color: #205c31;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 18px;
+  }
+  .success-banner.visible { display: flex; }
+
+  footer {
+    margin-top: 36px;
+    font-size: 0.75rem;
+    color: #8a9aa8;
+    text-align: center;
+    max-width: 360px;
+  }
+
+.pantalla1 {
+font-family: 'Times New Roman', Times, serif ;
+font-size:25px;
+color: #97890bd7;
+}
+
+.error_contraseña {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 25px;
+  color: #7c2525d7 ;
+}
+
+.datos_incorrectos {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 25px;
+  color: #97890bd7 ;
+}
+
+.cedula_registrada {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 25px;
+  color: #7c2525d7;
+}
+
+.registro_exitoso {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 25px;
+  color:#155226
+}
+
+.tittle {
+  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif; 
+}
+
+.enunciado{
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size:25PX ;
+}
+</style>
+</head>
+<body>
+
+<h1 class="app-title">Prototipo · Sistema de usuarios</h1>
+
+<div class="proto-nav">
+  <button id="nav-login" class="active" onclick="goTo('login')">Ingreso</button>
+  <button id="nav-register" onclick="goTo('register')">Registro</button>
+</div>
+
+<div class="screen-stage">
+
+  <!-- PANTALLA: INGRESO DE USUARIO -->
+  <div class="card visible" id="screen-login">
+    <img class="brand-logo" src="imagenes/logo.png" alt="Logo de NovaVenta">
+    <h1 class="tittle">Ingreso de usuario</h1>
+    <form onsubmit="handleLogin(event)" novalidate>
+      <div class="field">
+        <label for="login-correo" class="enunciado">Correo de usuario</label>
+        <input type="text" id="login-correo" placeholder="nombre@correo.com" autocomplete="off">
+      </div>
+      <div class="field">
+
+        <label for="login-clave" class="enunciado">Contraseña</label>
+        <input type="password" id="login-clave" placeholder="••••••••" autocomplete="off">
+      </div>
+      <button type="submit" class="btn-primary">Ingresar</button>
+    </form>
+    <div class="success-banner" id="login-success">✓ Ingreso exitoso</div>
+    <div class="link-row">¿No tienes cuenta? <a onclick="goTo('register')">Regístrate</a></div>
+  </div>
+
+  <!-- PANTALLA: REGISTRO DE NUEVOS USUARIOS -->
+  <div class="card" id="screen-register">
+    <img class="brand-logo" src="imagenes/logo.png" alt="Logo de NovaVenta">
+    <h1 class="tittle">Registro de usuario</h1>
+    <form onsubmit="handleRegister(event)" novalidate>
+      <div class="field">
+        <label for="reg-nombres" class="enunciado">Nombres</label>
+        <input type="text" id="reg-nombres" placeholder="Nombres" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="reg-apellidos" class="enunciado">Apellidos</label>
+        <input type="text" id="reg-apellidos" placeholder="Apellidos" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="reg-cedula" class="enunciado">Cédula</label>
+        <input type="text" id="reg-cedula" placeholder="Cédula" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="reg-fecha"  class="enunciado">Fecha de nacimiento</label>
+        <input type="text" id="reg-fecha" placeholder="aaaa/mm/dd" autocomplete="off">
+      </div>
+      <button type="submit" class="btn-primary">Registrar</button>
+    </form>
+    <div class="success-banner" id="register-success">✓ Usuario registrado</div>
+    <div class="link-row">¿Ya tienes cuenta? <a onclick="goTo('login')">Inicia sesión</a></div>
+  </div>
+
+</div>
+
+<footer>
+  La cédula <strong>123456789</strong> está precargada como "ya registrada" para poder probar ese mensaje de error.
+</footer>
+
+<!-- MODALES DE ERROR -->
+<div class="overlay" id="overlay-login-correo">
+  <div class="modal">
+    <h2 class="pantalla1">Correo invalido</h2>
+    <p>El correo del usuario está incompleto o no es válido.<br>Intente nuevamente.</p>
+    <button class="btn-primary" onclick="closeOverlay('overlay-login-correo')">Aceptar</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-login-clave">
+  <div class="modal">
+    <h2 class="error_contraseña">Contraseña incorrecta</h2>
+    <p>La contraseña es incorrecta.<br>Intente nuevamente.</p>
+    <button class="btn-primary" onclick="closeOverlay('overlay-login-clave')">Aceptar</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-register-datos">
+  <div class="modal">
+    <h2 class="datos_incorrectos">Datos incorrectos</h2>
+    <p>Datos incorrectos o incompletos.<br>Intente nuevamente.</p>
+    <button class="btn-primary" onclick="closeOverlay('overlay-register-datos')">Aceptar</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-register-cedula">
+  <div class="modal">
+    <h2 class="cedula_registrada">Cedula existente</h2>
+    <p>La cédula ingresada ya se encuentra registrada.<br>Intente nuevamente.</p>
+    <button class="btn-primary" onclick="closeOverlay('overlay-register-cedula')">Aceptar</button>
+  </div>
+
+  <div class="overlay" id="overlay-registro-exitoso">
+  <div class="modal">
+    <h2 class="Registro_exitoso">Solicitud de registro aceptada</h2>
+    <p>Los datos han sido guardados exitosamente.<br>Espere un momento.</p>
+    <button class="btn-primary" onclick="closeOverlay('overlay-login-correo')">Aceptar</button>
+  </div>
+</div>
+
+</div>
+
+<script>
+  function goTo(screen) {
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('visible'));
+    document.getElementById('screen-' + screen).classList.add('visible');
+    document.getElementById('nav-login').classList.toggle('active', screen === 'login');
+    document.getElementById('nav-register').classList.toggle('active', screen === 'register');
+    document.getElementById('login-success').classList.remove('visible');
+    document.getElementById('register-success').classList.remove('visible');
+  }
+
+  function openOverlay(id) {
+    document.getElementById(id).classList.add('visible');
+  }
+  function closeOverlay(id) {
+    document.getElementById(id).classList.remove('visible');
+  }
+
+  function handleLogin(e) {
+    e.preventDefault();
+    const correo = document.getElementById('login-correo').value.trim();
+    const clave = document.getElementById('login-clave').value.trim();
+    const correoValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
+
+    document.getElementById('login-success').classList.remove('visible');
+
+    if (!correoValido) {
+      openOverlay('overlay-login-correo');
+      return;
+    }
+    if (clave.length < 4) {
+      openOverlay('overlay-login-clave');
+      return;
+    }
+    document.getElementById('login-success').classList.add('visible');
+  }
+
+  function handleRegister(e) {
+    e.preventDefault();
+    const nombres = document.getElementById('reg-nombres').value.trim();
+    const apellidos = document.getElementById('reg-apellidos').value.trim();
+    const cedula = document.getElementById('reg-cedula').value.trim();
+    const fecha = document.getElementById('reg-fecha').value.trim();
+    const fechaValida = /^\d{2}\/\d{2}\/\d{2}$/.test(fecha);
+
+    document.getElementById('register-success').classList.remove('visible');
+
+    if (!nombres || !apellidos || !cedula || !fechaValida) {
+      openOverlay('overlay-register-datos');
+      return;
+    }
+    if (cedula === '123456789') {
+      openOverlay('overlay-register-cedula');
+      return;
+    }
+    document.getElementById('register-success').classList.add('visible');
+  }
+</script>
+
+</body>
+</html>
